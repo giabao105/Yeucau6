@@ -20,4 +20,4 @@ Mini-project này thực hiện phân tích tập dữ liệu bất động sả
 ## 🛠 Hướng dẫn chạy dự án
 1. Clone repository về máy:
    ```bash
-   git clone [https://github.com/username/real-estate-data-analysis.git](https://github.com/username/real-estate-data-analysis.git)
+   git clone [https://github.com/giabao105/real-estate-data-analysis.git](https://github.com/username/real-estate-data-analysis.git)
