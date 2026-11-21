@@ -16,8 +16,11 @@ Mini-project này thực hiện phân tích tập dữ liệu bất động sả
 - `src`: Mã nguồn Google Colab chứa pipeline xử lý dữ liệu, huấn luyện AI và UI Dashboard.
 - `BaoCao_PhanTich_GiaNha.pdf`: Báo cáo đánh giá mô hình tự động sinh từ mã nguồn.
 - `requirements.txt`: Danh sách các thư viện Python phụ thuộc.
-
 ## 🛠 Hướng dẫn chạy dự án
 1. Clone repository về máy:
    ```bash
-   git clone [https://github.com/giabao105/real-estate-data-analysis.git](https://github.com/username/real-estate-data-analysis.git)
+   git clone [https://github.com/giabao105/Yeucau6.git](https://github.com/giabao105/Yeucau6.git)
+Cài đặt các thư viện cần thiết:
+ ```bash
+pip install -r requirements.txt
+Mở file analysis_dashboard.ipynb bằng Jupyter Notebook hoặc tải lên Google Colab để chạy từng ô lệnh.
