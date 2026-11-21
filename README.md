@@ -13,7 +13,7 @@ Mini-project này thực hiện phân tích tập dữ liệu bất động sả
 
 ## 📂 Cấu trúc Repository
 - `data.csv`: Tập dữ liệu mẫu (đầu vào).
-- `analysis_dashboard.ipynb`: Mã nguồn Google Colab chứa pipeline xử lý dữ liệu, huấn luyện AI và UI Dashboard.
+- `src`: Mã nguồn Google Colab chứa pipeline xử lý dữ liệu, huấn luyện AI và UI Dashboard.
 - `BaoCao_PhanTich_GiaNha.pdf`: Báo cáo đánh giá mô hình tự động sinh từ mã nguồn.
 - `requirements.txt`: Danh sách các thư viện Python phụ thuộc.
 
