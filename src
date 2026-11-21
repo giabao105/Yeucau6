@@ -1,0 +1,121 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, r2_score
+from fpdf import FPDF
+import gradio as gr
+# 1. Đọc và làm sạch dữ liệu chuyên sâu hơn
+df = pd.read_csv('data.csv')
+
+# Lọc bỏ nhiễu và các căn nhà siêu sang (giá > 2.5 triệu USD) gây lệch mô hình
+df_clean = df[(df['price'] > 0) & (df['price'] < 2500000) & (df['sqft_living'] > 0)].copy()
+
+# 2. Xử lý đặc trưng (Feature Engineering)
+# Đưa thêm biến Vị trí (city), phòng tắm và năm xây dựng vào để AI học
+features = ['price', 'sqft_living', 'bedrooms', 'bathrooms', 'yr_built', 'city']
+df_model = df_clean[features].copy()
+
+# Biến đổi biến phân loại 'city' thành các cột One-Hot (0 và 1)
+df_model = pd.get_dummies(df_model, columns=['city'], drop_first=True)
+
+# 3. Phân chia tập dữ liệu
+X = df_model.drop('price', axis=1)
+y = df_model['price']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 4. Huấn luyện bằng Random Forest (Thuật toán tập hợp Ensemble)
+from sklearn.ensemble import RandomForestRegressor
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# 5. Đánh giá mô hình mới
+y_pred = model.predict(X_test)
+r2 = r2_score(y_test, y_pred)
+mae = mean_absolute_error(y_test, y_pred)
+
+print(f"Độ chính xác (R2 Score) mới: {r2:.2f}")
+print(f"Sai số tuyệt đối trung bình (MAE) mới: ${mae:,.0f}")
+
+# 6. Trực quan hóa kết quả Thực tế vs Dự đoán
+plt.figure(figsize=(8, 5))
+sns.scatterplot(x=y_test, y=y_pred, alpha=0.5, color='green')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2) # Đường chuẩn 100%
+plt.title('So sanh Gia nha Thuc te va Du doan (Random Forest)')
+plt.xlabel('Gia thuc te (USD)')
+plt.ylabel('Gia du doan (USD)')
+plt.ticklabel_format(style='plain', axis='both')
+plt.savefig('scatter_plot.png')
+plt.close()
+class PDFReport(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 14)
+        self.cell(0, 10, 'BAO CAO PHAN TICH DU LIEU BAT DONG SAN', 0, 1, 'C')
+        self.ln(5)
+
+pdf = PDFReport()
+pdf.add_page()
+pdf.set_font('Arial', '', 12)
+
+# Giới thiệu & Mô tả dữ liệu
+pdf.set_font('Arial', 'B', 12)
+pdf.cell(0, 10, '1. Gioi thieu & Mo ta du lieu', 0, 1)
+pdf.set_font('Arial', '', 12)
+pdf.multi_cell(0, 8, f"- So luong ban ghi hop le: {len(df_clean)} can nha.\n- Gia nha trung binh: ${df_clean['price'].mean():,.0f}\n- Dien tich trung binh: {df_clean['sqft_living'].mean():.0f} sqft.")
+pdf.ln(5)
+
+# Kết quả phân tích (Học máy)
+pdf.set_font('Arial', 'B', 12)
+pdf.cell(0, 10, '2. Ket qua Phan tich (Mo hinh Hoi quy Tuyen tinh)', 0, 1)
+pdf.set_font('Arial', '', 12)
+pdf.multi_cell(0, 8, f"- Mo hinh du doan gia nha dua tren Dien tich va So phong ngu.\n- Do chinh xac (R2 Score): {r2:.2f}\n- Sai so trung binh (MAE): ${mae:,.0f}")
+pdf.ln(5)
+
+# Biểu đồ minh họa
+pdf.set_font('Arial', 'B', 12)
+pdf.cell(0, 10, '3. Bieu do Minh hoa', 0, 1)
+pdf.image('scatter_plot.png', x=20, w=160)
+pdf.ln(5)
+
+# Kết luận
+pdf.set_font('Arial', 'B', 12)
+pdf.cell(0, 10, '4. Ket luan & De xuat', 0, 1)
+pdf.set_font('Arial', '', 12)
+pdf.multi_cell(0, 8, "- Dien tich (sqft) co tac dong ty le thuan manh me den Gia nha.\n- Mo hinh Linear Regression cung cap ket qua co ban tot de uoc tinh gia tri nha dat.")
+
+pdf.output('BaoCao_PhanTich_GiaNha.pdf')
+print("Đã tạo thành công file: BaoCao_PhanTich_GiaNha.pdf (Hãy tải về từ cột bên trái của Colab)")
+def predict_price(sqft, beds):
+    # Dự đoán giá nhà dựa trên dữ liệu người dùng nhập
+    pred = model.predict([[sqft, beds]])
+    return f"Giá nhà dự kiến: ${pred[0]:,.0f}"
+
+def plot_interactive(max_price):
+    # Vẽ biểu đồ tương tác
+    df_filtered = df_clean[df_clean['price'] <= max_price]
+    fig, ax = plt.subplots(figsize=(8, 4))
+    sns.histplot(df_filtered['price'], bins=30, kde=True, ax=ax, color='purple')
+    ax.set_title('Phan bo Gia nha')
+    return fig
+
+with gr.Blocks() as dashboard:
+    gr.Markdown("# 📊 Dashboard Phân Tích Dữ Liệu Bất Động Sản")
+    
+    with gr.Row():
+        with gr.Column():
+            gr.Markdown("### 1. Phân bố Dữ liệu")
+            price_slider = gr.Slider(minimum=100000, maximum=5000000, value=1000000, step=50000, label="Lọc Giá nhà tối đa")
+            plot_output = gr.Plot()
+            price_slider.change(fn=plot_interactive, inputs=price_slider, outputs=plot_output)
+            
+        with gr.Column():
+            gr.Markdown("### 2. Dự đoán Giá nhà bằng AI")
+            sqft_input = gr.Number(label="Diện tích sống (sqft)", value=2000)
+            beds_input = gr.Number(label="Số phòng ngủ", value=3)
+            predict_btn = gr.Button("Dự đoán")
+            result_output = gr.Textbox(label="Kết quả")
+            predict_btn.click(fn=predict_price, inputs=[sqft_input, beds_input], outputs=result_output)
+
+dashboard.launch(debug=True)
